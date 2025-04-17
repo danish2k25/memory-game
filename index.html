@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Card Game</title>
+<script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+    #memory-game {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .game-info {
+      margin: 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .card {
+      height: 100px;
+      perspective: 1000px;
+      cursor: pointer;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    .card-front, .card-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .card-front {
+      background-color: #f8f8f8;
+      transform: rotateY(180deg);
+    }
+    .card-back {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .game-complete {
+      margin-top: 40px;
+      padding: 20px;
+      background-color: #f8f8f8;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    @media (max-width: 600px) {
+      .game-board {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+</style>
+</head>
+<body>
+<div id="memory-game"></div>
+ 
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const cardEmojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+    function MemoryGame() {
+      const [cards, setCards] = useState([]);
+      const [flipped, setFlipped] = useState([]);
+      const [solved, setSolved] = useState([]);
+      const [moves, setMoves] = useState(0);
+      const [gameComplete, setGameComplete] = useState(false);
+      useEffect(() => {
+        initializeGame();
+      }, []);
+      const initializeGame = () => {
+        const cardPairs = [...cardEmojis, ...cardEmojis];
+        const shuffledCards = cardPairs
+          .sort(() => Math.random() - 0.5)
+          .map((emoji, index) => ({
+            id: index,
+            emoji,
+            isFlipped: false,
+            isSolved: false
+          }));
+        setCards(shuffledCards);
+        setFlipped([]);
+        setSolved([]);
+        setMoves(0);
+        setGameComplete(false);
+      };
+      const handleCardClick = (id) => {
+        if (flipped.length === 2 || solved.includes(id) || flipped.includes(id)) {
+          return;
+        }
+        const newFlipped = [...flipped, id];
+        setFlipped(newFlipped);
+        if (newFlipped.length === 2) {
+          setMoves(moves + 1);
+          const [firstId, secondId] = newFlipped;
+          const firstCard = cards.find(card => card.id === firstId);
+          const secondCard = cards.find(card => card.id === secondId);
+          if (firstCard.emoji === secondCard.emoji) {
+            setSolved([...solved, firstId, secondId]);
+            setFlipped([]);
+            if (solved.length + 2 === cards.length) {
+              setGameComplete(true);
+            }
+          } else {
+            setTimeout(() => {
+              setFlipped([]);
+            }, 1000);
+          }
+        }
+      };
+      return (
+<div className="App">
+<h1>Memory Card Game</h1>
+<div className="game-info">
+<p>Moves: {moves}</p>
+<button onClick={initializeGame}>Restart Game</button>
+</div>
+          {gameComplete ? (
+<div className="game-complete">
+<h2>Congratulations! 🎉</h2>
+<p>You completed the game in {moves} moves!</p>
+</div>
+          ) : (
+<div className="game-board">
+              {cards.map(card => (
+<div
+                  key={card.id}
+                  className={`card ${flipped.includes(card.id) || solved.includes(card.id) ? 'flipped' : ''}`}
+                  onClick={() => handleCardClick(card.id)}
+>
+<div className="card-front">{card.emoji}</div>
+<div className="card-back">?</div>
+</div>
+              ))}
+</div>
+          )}
+</div>
+      );
+    }
+    const root = ReactDOM.createRoot(document.getElementById('memory-game'));
+    root.render(<MemoryGame />);
+</script>
+</body>
+</html>
